@@ -34,9 +34,10 @@ import collections
 import datetime
 import os
 
+import html
+
 from king_phisher import errors
 from king_phisher import find
-from king_phisher import its
 from king_phisher import utilities
 from king_phisher.constants import ColorHexCode
 from king_phisher.client.assistants import CampaignAssistant
@@ -46,11 +47,6 @@ from king_phisher.client.widget import managers
 
 from gi.repository import Gdk
 from gi.repository import Gtk
-
-if its.py_v2:
-	import cgi as html
-else:
-	import html
 
 __all__ = ('CampaignSelectionDialog',)
 

@@ -30,11 +30,22 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import asyncore
-import logging
-import smtpd
+# This used to be built on the stdlib's asyncore/smtpd modules. Both were
+# removed from the standard library in Python 3.12 (PEP 594), which made
+# this module fail to import at all on 3.12+ (see upstream issue #522 --
+# confirmed reproducible on a python:3.13-slim image, and the upstream
+# maintainer confirmed this codebase won't get the fix). Rebuilt on asyncio
+# (stdlib) via aiosmtpd, the de facto maintained replacement for smtpd. The
+# public surface (constructor signature, serve_forever/shutdown,
+# process_message) is unchanged so tools/debug_smtp_server.py needs no
+# changes.
 
-class BaseSMTPServer(smtpd.SMTPServer, object):
+import logging
+import threading
+
+from aiosmtpd.controller import Controller
+
+class BaseSMTPServer(object):
 	"""
 	An SMTP server useful for debugging. Messages handled by this server
 	are not forwarded anywhere.
@@ -45,8 +56,18 @@ class BaseSMTPServer(smtpd.SMTPServer, object):
 		:param tuple remoteaddr: The remote address to use as an upstream SMTP relayer.
 		"""
 		self.logger = logging.getLogger('KingPhisher.SMTPD')
-		super(BaseSMTPServer, self).__init__(localaddr, remoteaddr)
+		self._stop_event = threading.Event()
+		self._controller = Controller(self, hostname=localaddr[0], port=localaddr[1])
 		self.logger.info("smtp server listening on {0}:{1}".format(localaddr[0], localaddr[1]))
+
+	async def handle_DATA(self, server, session, envelope):
+		"""
+		The handler hook aiosmtpd calls once a full message has been
+		received. Adapts it to the :py:meth:`.process_message` signature
+		this class has always exposed.
+		"""
+		self.process_message(session.peer, envelope.mail_from, envelope.rcpt_tos, envelope.content)
+		return '250 Message accepted for delivery'
 
 	def process_message(self, peer, mailfrom, rcpttos, data, **kwargs):
 		self.logger.info("received message from {0} ({1}) to {2}".format(mailfrom, peer[0], ', '.join(rcpttos)))
@@ -55,7 +76,11 @@ class BaseSMTPServer(smtpd.SMTPServer, object):
 		"""
 		Process requests until :py:meth:`BaseSMTPServer.shutdown` is called.
 		"""
-		asyncore.loop()
+		self._controller.start()
+		try:
+			self._stop_event.wait()
+		finally:
+			self._controller.stop()
 
 	def shutdown(self):
-		raise NotImplementedError()
+		self._stop_event.set()

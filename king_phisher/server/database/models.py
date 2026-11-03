@@ -474,7 +474,7 @@ class StorageData(Base):
 	modified = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
 	namespace = sqlalchemy.Column(sqlalchemy.String)
 	key = sqlalchemy.Column(sqlalchemy.String, nullable=False)
-	value = sqlalchemy.Column(sqlalchemy.Binary)
+	value = sqlalchemy.Column(sqlalchemy.LargeBinary)
 
 @register_table
 class Message(Base):

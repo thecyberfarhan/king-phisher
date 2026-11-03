@@ -26,7 +26,7 @@ def upgrade():
 		sqlalchemy.Column('created', sqlalchemy.DateTime),
 		sqlalchemy.Column('namespace', sqlalchemy.String),
 		sqlalchemy.Column('key', sqlalchemy.String, nullable=False),
-		sqlalchemy.Column('value', sqlalchemy.Binary)
+		sqlalchemy.Column('value', sqlalchemy.LargeBinary)
 	)
 
 	db_manager.Session.remove()
