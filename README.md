@@ -4,29 +4,46 @@ Fork of [king-phisher](https://github.com/CrimsonForge-io/king-phisher) (formerl
 Upstream says right below that it's no longer maintained, and its own maintainer has confirmed on an open
 bug report that a from-scratch King Phisher 2.0 is planned with none of this codebase carried over -- so
 nothing here was going to get fixed upstream. This fork fixes what's actually broken on a current Python
-without touching the campaign logic or the GTK client UI:
+without touching the campaign logic or the GTK client UI.
 
-- **Fixed:** `king_phisher/smtp_server.py` failed to import at all on Python 3.12+ (it used the stdlib
-  `asyncore`/`smtpd` modules, both removed by PEP 594) -- [upstream issue #522](https://github.com/CrimsonForge-io/king-phisher/issues/522).
-  Rebuilt on `asyncio` via `aiosmtpd`, same public API, verified end-to-end against a real SMTP client on
-  Python 3.14.
-- **Fixed:** `sqlalchemy.Binary` (removed in SQLAlchemy 1.4+), which broke importing the whole
-  `king_phisher.server.database.models` module and a historical Alembic migration. Swapped for
-  `sqlalchemy.LargeBinary` (identical column type) in both places.
-- **Modernized:** added `requirements.txt` with the same ~40 packages upstream's `Pipfile` pins to exact
-  2019 versions, switched to `>=` floors so pip resolves current wheels. Verified on Python 3.14: every
-  package installs cleanly and all 29 `king_phisher.server` submodules (plus the rest of the shared,
-  non-client code) import without error. One necessary cap: `setuptools<81`, because a transitive
-  dependency (`smoke-zephyr`) still imports the now-optional `pkg_resources` API -- documented inline in
-  `requirements.txt`. The GTK client itself needs system GObject-introspection libraries that are outside
-  pip's scope and weren't available to verify in the environment this fork was built in; that part of
-  `INSTALL.md`/`tools/install.sh` is unchanged.
-- **Added `tools/devshell.sh`:** upstream has no venv story at all (`install.sh` is a single
-  `sudo bash` system installer). This script creates `.venv/` on first run, installs/updates
-  `requirements.txt` into it, and only ever activates the venv inside a subshell -- so there's nothing to
-  remember to deactivate; closing that shell, the tool it ran, or the terminal all end it automatically.
-  Usage: `tools/devshell.sh` for an interactive shell, or `tools/devshell.sh <command>` to run one command
-  and return.
+### This fork vs. upstream
+
+| | Upstream `CrimsonForge-io/king-phisher` | This fork |
+| --- | --- | --- |
+| `smtp_server.py` on Python 3.12+ | Crashes on import (`asyncore`/`smtpd` removed by PEP 594) -- [issue #522](https://github.com/CrimsonForge-io/king-phisher/issues/522), confirmed abandoned by the maintainer | Rebuilt on `asyncio` via `aiosmtpd`, same public API, verified against a real SMTP client |
+| `server.database.models` import | Crashes (`sqlalchemy.Binary` removed in SQLAlchemy 1.4+) | Fixed: swapped for `sqlalchemy.LargeBinary` (identical column type) |
+| Dependency versions | `Pipfile` hard-pins ~40 packages to exact 2019 releases, no stated Python floor | `requirements.txt` with `>=` floors; verified every package installs and all 29 server submodules import cleanly on Python 3.14 |
+| Dev environment | `install.sh` is a single `sudo bash` system-level installer, no venv story | `tools/devshell.sh`: creates/updates a `.venv`, activates it only inside a subshell -- nothing to manually deactivate |
+
+### Fixed: `smtp_server.py` failed to import at all on Python 3.12+
+
+It used the stdlib `asyncore`/`smtpd` modules, both removed by PEP 594 -- [upstream issue
+#522](https://github.com/CrimsonForge-io/king-phisher/issues/522). Rebuilt on `asyncio` via `aiosmtpd`,
+same public API, verified end-to-end against a real SMTP client on Python 3.14.
+
+### Fixed: `sqlalchemy.Binary` (removed in SQLAlchemy 1.4+)
+
+Broke importing the whole `king_phisher.server.database.models` module and a historical Alembic
+migration. Swapped for `sqlalchemy.LargeBinary` (identical column type) in both places.
+
+### Modernized: dependency floors
+
+Added `requirements.txt` with the same ~40 packages upstream's `Pipfile` pins to exact 2019 versions,
+switched to `>=` floors so pip resolves current wheels. Verified on Python 3.14: every package installs
+cleanly and all 29 `king_phisher.server` submodules (plus the rest of the shared, non-client code) import
+without error. One necessary cap: `setuptools<81`, because a transitive dependency (`smoke-zephyr`) still
+imports the now-optional `pkg_resources` API -- documented inline in `requirements.txt`. The GTK client
+itself needs system GObject-introspection libraries that are outside pip's scope and weren't available to
+verify in the environment this fork was built in; that part of `INSTALL.md`/`tools/install.sh` is
+unchanged.
+
+### Added `tools/devshell.sh`: automated venv lifecycle
+
+Upstream has no venv story at all (`install.sh` is a single `sudo bash` system installer). This script
+creates `.venv/` on first run, installs/updates `requirements.txt` into it, and only ever activates the
+venv inside a subshell -- so there's nothing to remember to deactivate; closing that shell, the tool it
+ran, or the terminal all end it automatically. Usage: `tools/devshell.sh` for an interactive shell, or
+`tools/devshell.sh <command>` to run one command and return.
 
 ---
 
