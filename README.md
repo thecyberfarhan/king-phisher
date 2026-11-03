@@ -6,6 +6,34 @@ bug report that a from-scratch King Phisher 2.0 is planned with none of this cod
 nothing here was going to get fixed upstream. This fork fixes what's actually broken on a current Python
 without touching the campaign logic or the GTK client UI.
 
+### Install
+
+Two paths: the full install (GTK client + server, needs system packages), or just the Python/dev side
+this fork actually adds, which needs nothing beyond Python.
+
+#### Full install (client + server) -- same command on Arch, Kali and Parrot
+
+`tools/install.sh` detects your distro itself and installs whatever system packages it needs (GTK,
+PostgreSQL, etc.). Unchanged from upstream -- see `INSTALL.md` for what it does on your distro:
+
+```bash
+git clone https://github.com/thecyberfarhan/king-phisher.git
+cd king-phisher
+sudo bash tools/install.sh
+```
+
+#### Just the dev/Python side (this fork's fixes, no GTK needed)
+
+Only touches `king_phisher.server` and the shared code this fork fixed and tested (see above) -- the GTK
+client itself still needs the full install above. Same steps on Arch, Kali and Parrot once `python3`,
+`pip` and `git` are installed:
+
+```bash
+git clone https://github.com/thecyberfarhan/king-phisher.git
+cd king-phisher
+tools/devshell.sh          # creates .venv, installs requirements.txt, drops you into it
+```
+
 ### This fork vs. upstream
 
 | | Upstream `CrimsonForge-io/king-phisher` | This fork |
