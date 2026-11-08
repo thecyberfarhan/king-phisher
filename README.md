@@ -1,3 +1,9 @@
+# king-phisher (fork)
+
+![Python](https://img.shields.io/badge/-Python-3776AB?style=flat-square&logo=python&logoColor=white)
+![Fork](https://img.shields.io/badge/-fork-B4232C?style=flat-square)
+![Upstream](https://img.shields.io/badge/upstream-unmaintained-444?style=flat-square)
+
 ## This is a fork
 
 Fork of [king-phisher](https://github.com/CrimsonForge-io/king-phisher) (formerly `rsmusllp/king-phisher`).
